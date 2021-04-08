@@ -12,22 +12,63 @@ using namespace OB;
 @implementation ReadMachOManager
 
 static ReadMachOManager *_manager = nil;
-void mycallback(const char * cs, bool isSwift) {
-    if ([_manager.delagate respondsToSelector:@selector(manager:field:)]) {
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        self.clsMethodDict = [NSMutableDictionary new];
+    }
+    return self;
+}
+void mycallback(const char * cs, StringType type) {
+    if ([_manager.delagate respondsToSelector:@selector(manager:field:type:)]) {
         NSString *field = [[NSString alloc] initWithCString:cs encoding:NSUTF8StringEncoding];
-        if (isSwift) {
-            
-            [_manager.delagate manager:_manager field:[_manager methodStringFromDemangleString:swiftDemangleMethod(field, @"")]];
+        if (type == StringTypeSwiftMethod) {
+            [_manager.delagate manager:_manager field:[_manager methodStringFromDemangleString:swiftDemangleMethod(field, @"")] type:FieldTypeSwiftMethod];
         } else {
-            [_manager.delagate manager:_manager field:field];
+            [_manager.delagate manager:_manager field:field type:(FieldType)type];
+        } 
+    }
+}
+
+NSArray* getKeyValueFromStartEnd(NSString *origin,NSString *start,NSString *end,NSString *separate) {
+    CGFloat loc = [origin rangeOfString:start].location + [origin rangeOfString:start].length;
+    NSRange range = NSMakeRange(loc, [origin rangeOfString:end].location-loc);
+    NSString * classMethod = [origin substringWithRange:range];
+    return [classMethod componentsSeparatedByString:separate];
+}
+
+void callbackForStringTable(const char * cs) {
+    NSString *field = [[NSString alloc] initWithCString:cs encoding:NSUTF8StringEncoding];
+    if ([field containsString:@"-["] && [field containsString:@"]"]) {
+
+        NSArray *keyValue = getKeyValueFromStartEnd(field,@"-[",@"]",@" ");
+        NSString * cls = keyValue.firstObject;
+        NSString * method = keyValue.lastObject;
+        if (cls.length > 0 && method.length > 0) {
+            [_manager.clsMethodDict setValue:cls forKey:method];
+        }
+    } else if ([field containsString:@"+["] && [field containsString:@"]"]) {
+        NSArray *keyValue = getKeyValueFromStartEnd(field,@"+[",@"]",@" ");
+        NSString * cls = keyValue.firstObject;
+        NSString * method = keyValue.lastObject;
+        if (cls.length > 0 && method.length > 0) {
+            [_manager.clsMethodDict setValue:cls forKey:method];
+        }
+    }
+    else if ([field containsString:@"_OBJC_IVAR_$"]) {
+        NSString * classAndIvar = [field componentsSeparatedByString:@"_OBJC_IVAR_$"].lastObject;
+        NSString *cls = [classAndIvar componentsSeparatedByString:@"."].firstObject;
+        NSString *ivar = [classAndIvar componentsSeparatedByString:@"."].lastObject;
+        if (cls.length > 0 && ivar.length > 0) {
+            [_manager.clsMethodDict setValue:cls forKey:ivar];
         }
     }
 }
 
 void finishedback() {
-    if ([_manager.delagate respondsToSelector:@selector(readFinished)]) {
+    if ([_manager.delagate respondsToSelector:@selector(readFinished:)]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [_manager.delagate readFinished];
+            [_manager.delagate readFinished:_manager];
         });
     }
 }
@@ -38,8 +79,8 @@ void finishedback() {
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         ReadMacho *macho = new ReadMacho(mycallback, false);
         macho->finished = finishedback;
+        macho->callbackST = callbackForStringTable;
         macho->readMachoWithData([fileData bytes]);
-        
         delete macho;
     });
 }

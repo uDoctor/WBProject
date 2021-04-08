@@ -1,0 +1,6 @@
+framework module Pods_CheckAPP {
+  umbrella header "Pods-CheckAPP-umbrella.h"
+
+  export *
+  module * { export * }
+}

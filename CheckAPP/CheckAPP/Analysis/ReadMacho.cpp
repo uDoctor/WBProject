@@ -46,9 +46,16 @@ void ReadMacho::readMachoWithData(const void *byte) {
             printf("64-bit - small");
             break;
         default:
+            printf("*******  no support ！！！******* ");
             break;
     }
     
+    if (!this->isFinished) {
+        if (this->finished) {
+            this->finished();
+        }
+    }
+   
     
 }
 
@@ -87,18 +94,17 @@ void ReadMacho::analysisForArch_64_lc(const void *byte) {
                 
             case LC_CODE_SIGNATURE:
                 if (this->finished) {
+                    this->isFinished = true;
                     this->finished();
                 }
 //                NSLog(@"data read finish");
                 return;
                 break;
             default:
-//                NSLog(@"不支持 %u command",lc.cmd);
+                printf("cmd = %u \n",lc.cmd);
                 break;
         }
         lc_loc += lc.cmdsize;
-//        printf("2-cmd = %u \n",lc.cmd);
-//        printf("2-cmdsize = %u \n",lc.cmdsize);
     }
 }
 
@@ -117,12 +123,11 @@ void ReadMacho::analysisForArch_64_lc_secgment(const void *bytes, unsigned long 
     }
     std::unordered_map<std::string, std::string> map;
 //    map["__text"] = "__TEXT";
-    map["__const"]                  = "__TEXT";
+    
+//    map["__const"]                  = "__TEXT";
     map["__objc_methname"]          = "__TEXT";
     map["__cstring"]                = "__TEXT";
     map["__objc_classname__TEXT"]   = "__TEXT";
-    map["__cstring"]                = "__TEXT";
-    map["__cstring"]                = "__TEXT";
     map["__swift5_types"]           = "__TEXT";
     map["__swift5_protos"]          = "__TEXT";
     
@@ -132,7 +137,7 @@ void ReadMacho::analysisForArch_64_lc_secgment(const void *bytes, unsigned long 
         memcpy(&section, (const char*)bytes+sec_loc, sizeof(struct section_64));
         sec_loc += sizeof(struct section_64);
         if (map.find(section.sectname) == map.end()) {
-//            continue;
+            continue;
         }
         if (this->need_log) {
             printf("%s : %s \n",section.segname, section.sectname);
@@ -142,7 +147,15 @@ void ReadMacho::analysisForArch_64_lc_secgment(const void *bytes, unsigned long 
             strcmp(section.sectname, "__swift5_protos") == 0 ) {
             analysisForArch_64_lc_swift(bytes, section);
         } else {
-            this->isSwiftMethod = false;
+            if (strcmp(section.sectname, "__objc_methname") == 0) {
+                this->strType = StringTypeOCMethod;
+            } else if (strcmp(section.sectname, "__cstring") == 0) {
+                this->strType = StringTypeCString;
+            }else if (strcmp(section.sectname, "__objc_classname__TEXT") == 0) {
+                this->strType = StringTypeOCClass;
+            } else {
+                this->strType = StringTypeOther;
+            }
             std::string str = stringFromBytes((const char*)bytes + section.offset, section.size);
         }
     }
@@ -173,7 +186,7 @@ void ReadMacho::swiftClassFormBytes(const void *bytes, uint64_t classOffset) {
     uint64_t nameoff = namePoint + 8 + classOffset - this->vmSize;
 //    printf("%s \n", (const char*)bytes+nameoff);
     if (this->callback) {
-        this->callback((const char*)bytes+nameoff, false);
+        this->callback((const char*)bytes+nameoff, StringTypeSwiftClass);
     }
 }
 
@@ -182,9 +195,9 @@ void ReadMacho::analysisForArch_64_lc_load_dylib(const void *bytes, unsigned lon
     structFromBytes(dylib_cmd, bytes, loc);
     union lc_str cur_lc_str = dylib_cmd.dylib.name;
     const char *name = (const char*)bytes + loc + cur_lc_str.offset;
-//    printf("use dylib = %s \n",name);
+    printf("use dylib = %s \n",name);
     if (this->callback) {
-        this->callback(name, false);
+        this->callback(name, StringTypeDylib);
     }
 }
 
@@ -202,7 +215,7 @@ void ReadMacho::structFromBytes(T &t,const void *bytes,unsigned long loc) {
 void ReadMacho::analysisForArch_64_symtab(const void *bytes, unsigned long loc) {
     struct symtab_command symtab;
     structFromBytes(symtab, bytes, loc);
-    this->isSwiftMethod = true;
+    this->strType = StringTypeSwiftMethod;
     stringFromBytes((const char*)bytes + symtab.stroff, symtab.strsize);
    
 }
@@ -239,8 +252,12 @@ std::string ReadMacho::stringFromBytes(const void *bytes, unsigned long len) {
                 index += c_len;
                 continue;
             }
+//            printf("%s\n",(cstr+index));
+            if (this->callbackST) {
+                this->callbackST((cstr+index));
+            }
             if (this->callback) {
-                this->callback((cstr+index), this->isSwiftMethod);
+                this->callback((cstr+index), this->strType);
             }
             if (strlen((cstr+index)) > 2) {
                 str += "<br>";

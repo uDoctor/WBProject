@@ -21,7 +21,19 @@
 ////#import <UIKit/UIKit.h>
 //#endif
 
-typedef  void(*Callback)(const char *, bool isSwift);
+typedef enum : int {
+    StringTypeDylib,
+    StringTypeOCClass,
+    StringTypeOCMethod,
+    StringTypeSwiftClass,
+    StringTypeSwiftMethod,
+    StringTypeSwiftProperty,
+    StringTypeCString,
+    StringTypeOther
+} StringType;
+
+typedef  void(*Callback)(const char *, StringType stringType);
+typedef  void(*CBStringTable)(const char *);
 typedef  void(*FinishCallback)();
 namespace OB {
 class ReadMacho {
@@ -32,16 +44,19 @@ public:
     ReadMacho():callback(NULL){};
     ~ReadMacho(){
         this->callback = NULL;
+        this->callbackST = NULL;
     };
     void readMachoWithData(const void *byte);
     
     std::string stringFromBytes(const void *bytes, unsigned long len);
     std::string stringFromBytes2(const void *bytes, unsigned long len);
+    CBStringTable callbackST;
 
 private:
     bool need_log = false;
+    bool isFinished = false;
     Callback callback;
-    bool isSwiftMethod = false;
+    StringType strType = StringTypeOther;
     uint64_t vmSize;
     void analysisForArch_64_lc(const void *byte);
         
