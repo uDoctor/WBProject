@@ -8,8 +8,8 @@
 #import "APIManager.h"
 #import <FMDB/FMDatabase.h>
 
+#define BundlePath(name) [[NSBundle mainBundle] pathForResource:name ofType:@"txt"]
 
-#define DBPath @"/Library/Caches/mkj_private_apis.db"
 @interface APIManager()
 
 @property (nonatomic, copy) NSArray *apiPaths;
@@ -33,90 +33,28 @@
         self.privateFrameWorkTable = [NSHashTable new];
         self.surePrivateApiTable = [NSHashTable new];
         
-        [self readDB];
-        [self readApiFromFile];
-        [self readPublicApiFromDB];
-        NSString *p0 = [NSString stringWithFormat:@"%@/Library/Caches/private_framwork.txt",NSHomeDirectory()];
-        [self readPrivateFrameworkFromPath:p0 toTable:self.privateFrameWorkTable];
+        NSString *p0 = BundlePath(@"framework_private_apis");
+        [self readPrivateFrameworkFromPath:p0 toTable:self.apiTable];
+                
+        NSString *p1 = BundlePath(@"document_apis");
+        [self readPrivateFrameworkFromPath:p1 toTable:self.publicApiTable];
         
-        NSString *p1 = [NSString stringWithFormat:@"%@/Library/Caches/our_private_apis.txt",NSHomeDirectory()];
-        [self readPrivateFrameworkFromPath:p1 toTable:self.surePrivateApiTable];
+        NSString *p2 = BundlePath(@"private_framwork");
+        [self readPrivateFrameworkFromPath:p2 toTable:self.privateFrameWorkTable];
+        
+        NSString *p3 = BundlePath(@"our_private_apis");
+        [self readPrivateFrameworkFromPath:p3 toTable:self.surePrivateApiTable];
         
     }
     return self;
 }
-- (void)readDB {
-    //
-    //all_private_apis
-    //all_private_apis             framework_private_apis
-    //document_apis                private_framework_dump_apis
-    //framework_dump_apis          white_list_apis
-    //framework_header_apis
-    NSString *path = [NSString stringWithFormat:@"%@%@",NSHomeDirectory(),DBPath];
-    NSLog(@"path:%@",path);
-    self.db = [[FMDatabase alloc] initWithPath:path];
-    if ([self.db open]) {
-        NSLog(@" open database ");
-    } else {
-        NSLog(@"fail to open database %@",self.db );
-    }
-}
 
-- (BOOL)selectWithName:(NSString *)name {
-    if (![self.db open]) { return NO; }
-    // 查询
-    NSString *sql = [NSString stringWithFormat:@"select * from framework_private_apis where api_name = '%@'",name];
-    FMResultSet *rs = [self.db executeQuery:sql];
-    NSUInteger size = 0;
-    BOOL flag = NO;
-    NSHashTable *table = [NSHashTable new];
-    while ([rs next]) {
-        size ++;
-        int idNum = [rs intForColumnIndex:0];
-        NSString *name = [rs stringForColumnIndex:1];
-        NSString * className = [rs stringForColumnIndex:2];
-        [table addObject:name];
-        NSLog(@"%d-%@-%@",idNum,name,className);
-        flag = YES;
+- (void)addPrivateApis:(NSArray *)apis {
+    if (apis.count > 0) {
+        [apis enumerateObjectsUsingBlock:^(NSString *api, NSUInteger idx, BOOL * _Nonnull stop) {
+            [self.surePrivateApiTable addObject:api];
+        }];
     }
-    return flag;
-}
-
-
-- (NSUInteger)apiCount {
-    return self.apiTable.count;
-}
-
-- (void)readApiFromFile {
-    if (![self.db open]) { return; }
-    // 查询
-    NSString *sql = [NSString stringWithFormat:@"select api_name from framework_private_apis"];
-    FMResultSet *rs = [self.db executeQuery:sql];
-    NSUInteger size = 0;
-    NSHashTable *table = [NSHashTable new];
-    while ([rs next]) {
-        size ++;
-        NSString *name = [rs stringForColumnIndex:0];
-        [table addObject:name];
-    }
-    NSLog(@"size=%lu",size);
-    self.apiTable = table;
-  
-}
-
-- (void)readPublicApiFromDB {
-    if (![self.db open]) {
-        return;
-    }
-    // 查询
-    NSString *sql = [NSString stringWithFormat:@"select api_name from document_apis"];
-    FMResultSet *rs = [self.db executeQuery:sql];
-    NSHashTable *table = [NSHashTable new];
-    while ([rs next]) {
-        NSString *name = [rs stringForColumnIndex:0];
-        [table addObject:name];
-    }
-    self.publicApiTable = table;
 }
 
 - (NSArray *)getApiArray {

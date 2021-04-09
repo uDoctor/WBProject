@@ -9,6 +9,13 @@
 #import "ReadMacho.hpp"
 #import "Demangler.h"
 using namespace OB;
+
+@interface ReadMachOManager()
+/// 去重的table
+@property (nonatomic, strong) NSHashTable *oneStrTable;
+
+@end
+
 @implementation ReadMachOManager
 
 static ReadMachOManager *_manager = nil;
@@ -16,6 +23,7 @@ static ReadMachOManager *_manager = nil;
     self = [super init];
     if (self) {
         self.clsMethodDict = [NSMutableDictionary new];
+        self.oneStrTable = [NSHashTable new];
     }
     return self;
 }
@@ -23,7 +31,11 @@ void mycallback(const char * cs, StringType type) {
     if ([_manager.delagate respondsToSelector:@selector(manager:field:type:)]) {
         NSString *field = [[NSString alloc] initWithCString:cs encoding:NSUTF8StringEncoding];
         if (type == StringTypeSwiftMethod) {
-            [_manager.delagate manager:_manager field:[_manager methodStringFromDemangleString:swiftDemangleMethod(field, @"")] type:FieldTypeSwiftMethod];
+            NSString *method = [_manager methodStringFromDemangleString:swiftDemangleMethod(field, @"")];
+            if (![_manager.oneStrTable containsObject:method]) {
+                [_manager.delagate manager:_manager field:method type:FieldTypeSwiftMethod];
+                [_manager.oneStrTable addObject:method];
+            }
         } else {
             [_manager.delagate manager:_manager field:field type:(FieldType)type];
         } 
@@ -105,11 +117,17 @@ void finishedback() {
     }
     
     //  obTestSwiftMethod(
-    NSString *methodStr = [frontString componentsSeparatedByString:@"."].lastObject;
+    NSArray *tmpArr = [frontString componentsSeparatedByString:@"."];
+    NSString *methodStr = tmpArr.lastObject;
+    NSString *cls = [tmpArr objectAtIndex:tmpArr.count-2]; //记录class
     if (methodStr.length <= 1) {
         return nil;
     }
-    return [methodStr substringToIndex:methodStr.length];
+    NSString *met = [methodStr substringToIndex:methodStr.length];
+    if (cls.length > 0 && met.length > 0) {
+        [_manager.clsMethodDict setValue:cls forKey:met]; //将class和method放入dict
+    }
+    return met;
 }
 
 @end

@@ -31,6 +31,7 @@ typedef enum : NSUInteger {
 
 @property (nonatomic, strong) NSMutableArray *dataArray;
 @property (nonatomic, strong) NSMutableArray *ocMethodsArray;
+@property (nonatomic, strong) NSMutableArray *swiftMethodsArray;
 @property (nonatomic, strong) NSMutableArray *sureArray;
 @property (nonatomic, copy) NSArray *apiArray;
 @property (nonatomic, assign) MatchRule rule;
@@ -46,6 +47,7 @@ typedef enum : NSUInteger {
     self.dataArray = [NSMutableArray new];
     self.ocMethodsArray = [NSMutableArray new];
     self.sureArray = [NSMutableArray new];
+    self.swiftMethodsArray = [NSMutableArray new];
     
     self.apiManager = [[APIManager alloc] init];
     
@@ -58,17 +60,20 @@ typedef enum : NSUInteger {
 - (void)addClick {
     if (self.addTextView.string.length > 0) {
         NSMutableArray *marr = [NSMutableArray arrayWithArray:self.apiArray];
+        NSMutableArray *addMarr = [NSMutableArray new];
         if ([self.addTextView.string containsString:@","]) {
             NSArray *arr = [self.addTextView.string componentsSeparatedByString:@","];
             [arr enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 if ([(NSString*)obj length] > 0) {
                     [marr addObject:(NSString*)obj];
+                    [addMarr addObject:(NSString*)obj];
                 }
             }];
         } else {
             [marr addObject:[self.addTextView.string copy]];
         }
         self.apiArray = [marr copy];
+        [self.apiManager addPrivateApis:[addMarr copy]];
         [self.apiTableView reloadData];
         self.addTextView.string = @"";
 
@@ -134,23 +139,31 @@ typedef enum : NSUInteger {
         switch (type) {
             case FieldTypeDylib:
                 if ([self.apiManager checkPrivateFrameworkWithPath:field]) {
-                    [self.dataArray addObject:field];
+                    [self.dataArray addObject:[NSString stringWithFormat:@"[Dylib] %@",field]];
                 }
                 break;
             case FieldTypeCString:
                 if ([self.apiManager checkSurePrivateApi:field]) {
-                    [self.sureArray addObject:field];
+                    [self.sureArray addObject:[NSString stringWithFormat:@"[String] %@",field]];
                 } else if ([self.apiManager checkPrivateFrameworkWithPath:field]) {
-                    [self.sureArray addObject:field];
+                    [self.sureArray addObject:[NSString stringWithFormat:@"[String] %@",field]];
                 } else if ([self.apiManager checkPrivateApiWithApi:field]) {
-                    [self.dataArray addObject:field];
+                    [self.dataArray addObject:[NSString stringWithFormat:@"[String] %@",field]];
                 }
                 break;
             case FieldTypeOCMethod:
                 if ([self.apiManager checkSurePrivateApi:field]) {
-                    [self.sureArray addObject:field];
+                    [self.sureArray addObject:[NSString stringWithFormat:@"[OCMethod] %@",field]];
                 } else if ([self.apiManager checkPrivateApiWithApi:field]) {
-                    [self.ocMethodsArray addObject:field];
+                    [self.ocMethodsArray addObject:[NSString stringWithFormat:@"[OCMethod] %@",field]];
+                }
+                break;
+                
+            case FieldTypeSwiftMethod:
+                if ([self.apiManager checkSurePrivateApi:field]) {
+                    [self.sureArray addObject:[NSString stringWithFormat:@"[SwiftMethod] %@",field]];
+                } else if ([self.apiManager checkPrivateApiWithApi:field]) {
+                    [self.swiftMethodsArray addObject:[NSString stringWithFormat:@"[SwiftMethod] %@",field]];
                 }
                 break;
             default:
@@ -163,22 +176,32 @@ typedef enum : NSUInteger {
 }
 
 - (void)readFinished:(ReadMachOManager *)manager {
-    if (self.dataArray.count == 0 &&  self.ocMethodsArray.count == 0) {
+    if (self.dataArray.count == 0 &&  self.ocMethodsArray.count == 0&  self.sureArray.count == 0) {
         [self.dataArray addObject:@"no private API"];
     }
-    
+    NSLog(@"clsMethodDict%@",manager.clsMethodDict);
+    //去除自定义的oc方法
     for (NSString *method in [self.ocMethodsArray mutableCopy]) {
-        if ([manager.clsMethodDict valueForKey:method]) {
+        NSString *name = [method componentsSeparatedByString:@" "].lastObject;
+        if ([manager.clsMethodDict valueForKey:name]) {
             [self.ocMethodsArray removeObject:method];
         }
     }
-    NSMutableArray *temp = [NSMutableArray new];
+    //去除自定义的swift方法
+    for (NSString *method in [self.swiftMethodsArray mutableCopy]) {
+        NSString *name = [method componentsSeparatedByString:@" "].lastObject;
+        if ([manager.clsMethodDict valueForKey:name]) {
+            [self.swiftMethodsArray removeObject:method];
+        }
+    }
     
+    NSMutableArray *temp = [NSMutableArray new];
     [temp addObjectsFromArray:self.sureArray];
     [temp addObjectsFromArray:self.ocMethodsArray];
+    [temp addObjectsFromArray:self.swiftMethodsArray];
     [temp addObjectsFromArray:self.dataArray];
+    
     self.dataArray = temp;
-//    self.dataArray = self.ocMethodsArray;
     [self.tableView reloadData];
     [self stopProgress];
 //    if (self.dataArray.count > 0) {

@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)checkPrivateFrameworkWithPath:(NSString *)path;
 - (NSArray *)getApiArray;
 
+- (void)addPrivateApis:(NSArray *)apis;
 /// 删除本地数据源中的api 谨慎使用
 - (void)removeApiWithArray:(NSArray *)apis;
 @end
