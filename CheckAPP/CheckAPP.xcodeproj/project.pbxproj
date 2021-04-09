@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		1FE6C919716610BDA6CAFF71 /* Pods_CheckAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B39191F277C1530D7CC912CD /* Pods_CheckAPP.framework */; };
 		24725AE2261711890048CD3C /* APIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 24725AE0261711890048CD3C /* APIManager.m */; };
+		24725AFB261F1BCE0048CD3C /* our_private_apis.txt in Resources */ = {isa = PBXBuildFile; fileRef = 24725AF5261F1BCB0048CD3C /* our_private_apis.txt */; };
+		24725AFD261F1BCE0048CD3C /* private_framwork.txt in Resources */ = {isa = PBXBuildFile; fileRef = 24725AF7261F1BCC0048CD3C /* private_framwork.txt */; };
+		24725B0326203A0A0048CD3C /* framework_private_apis.txt in Resources */ = {isa = PBXBuildFile; fileRef = 24725B0226203A0A0048CD3C /* framework_private_apis.txt */; };
+		24725B0A26203E830048CD3C /* document_apis.txt in Resources */ = {isa = PBXBuildFile; fileRef = 24725B0926203E830048CD3C /* document_apis.txt */; };
 		24AAD82F25A31C000065F4B8 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 24AAD82E25A31C000065F4B8 /* AppDelegate.m */; };
 		24AAD83225A31C000065F4B8 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 24AAD83125A31C000065F4B8 /* ViewController.m */; };
 		24AAD83425A31C040065F4B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 24AAD83325A31C040065F4B8 /* Assets.xcassets */; };
@@ -26,6 +30,10 @@
 		24725AD5261710A10048CD3C /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		24725AE0261711890048CD3C /* APIManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APIManager.m; sourceTree = "<group>"; };
 		24725AE1261711890048CD3C /* APIManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APIManager.h; sourceTree = "<group>"; };
+		24725AF5261F1BCB0048CD3C /* our_private_apis.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = our_private_apis.txt; sourceTree = "<group>"; };
+		24725AF7261F1BCC0048CD3C /* private_framwork.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = private_framwork.txt; sourceTree = "<group>"; };
+		24725B0226203A0A0048CD3C /* framework_private_apis.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = framework_private_apis.txt; sourceTree = "<group>"; };
+		24725B0926203E830048CD3C /* document_apis.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = document_apis.txt; sourceTree = "<group>"; };
 		24AAD82A25A31C000065F4B8 /* CheckAPP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheckAPP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		24AAD82D25A31C000065F4B8 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		24AAD82E25A31C000065F4B8 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -85,6 +93,10 @@
 		248475CE26117AA200B724E7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				24725B0926203E830048CD3C /* document_apis.txt */,
+				24725B0226203A0A0048CD3C /* framework_private_apis.txt */,
+				24725AF5261F1BCB0048CD3C /* our_private_apis.txt */,
+				24725AF7261F1BCC0048CD3C /* private_framwork.txt */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -219,8 +231,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				24725B0A26203E830048CD3C /* document_apis.txt in Resources */,
+				24725AFD261F1BCE0048CD3C /* private_framwork.txt in Resources */,
 				24AAD83425A31C040065F4B8 /* Assets.xcassets in Resources */,
+				24725B0326203A0A0048CD3C /* framework_private_apis.txt in Resources */,
 				24AAD83725A31C040065F4B8 /* Main.storyboard in Resources */,
+				24725AFB261F1BCE0048CD3C /* our_private_apis.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
