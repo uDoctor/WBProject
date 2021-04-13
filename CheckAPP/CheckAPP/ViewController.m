@@ -174,30 +174,73 @@ typedef enum : NSUInteger {
         [self.dataArray addObject:@"no private API"];
     }
     NSLog(@"clsMethodDict%@",manager.clsMethodDict);
-    //去除自定义的oc方法
-    for (NSString *method in [self.ocMethodsArray mutableCopy]) {
-        NSString *name = [method componentsSeparatedByString:@" "].lastObject;
-        if ([manager.clsMethodDict valueForKey:name]) {
-            [self.ocMethodsArray removeObject:method];
-        }
-    }
-    //去除自定义的swift方法
-    for (NSString *method in [self.swiftMethodsArray mutableCopy]) {
-        NSString *name = [method componentsSeparatedByString:@" "].lastObject;
-        if ([manager.clsMethodDict valueForKey:name]) {
-            [self.swiftMethodsArray removeObject:method];
-        }
-    }
+   
     
-    NSMutableArray *temp = [NSMutableArray new];
-    [temp addObjectsFromArray:self.sureArray];
-    [temp addObjectsFromArray:self.ocMethodsArray];
-    [temp addObjectsFromArray:self.swiftMethodsArray];
-    [temp addObjectsFromArray:self.dataArray];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        //去除自定义的oc方法
+        for (NSString *method in [self.ocMethodsArray mutableCopy]) {
+            NSString *name = [method componentsSeparatedByString:@" "].lastObject;
+            
+            [manager.clsMethodDict.allKeys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSArray *arr = [manager.clsMethodDict valueForKey:key];
+                for (NSString *field in arr) {
+                    if ([field isEqualToString:name]) {
+                        [self.ocMethodsArray removeObject:method];
+                    }
+                }
+            }];
+        }
+        //去除自定义的swift方法
+        for (NSString *method in [self.swiftMethodsArray mutableCopy]) {
+            NSString *name = [method componentsSeparatedByString:@" "].lastObject;
+            
+            [manager.clsMethodDict.allKeys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSArray *arr = [manager.clsMethodDict valueForKey:key];
+                for (NSString *field in arr) {
+                    if ([field isEqualToString:name]) {
+                        [self.swiftMethodsArray removeObject:method];
+                    }
+                }
+            }];
+        }
+        
+        NSMutableArray *temp = [NSMutableArray new];
+        [temp addObjectsFromArray:self.sureArray];
+        [temp addObjectsFromArray:self.ocMethodsArray];
+        [temp addObjectsFromArray:self.swiftMethodsArray];
+        [temp addObjectsFromArray:self.dataArray];
+        
+        self.dataArray = [temp mutableCopy];
+        
+        [temp enumerateObjectsUsingBlock:^( NSString *str, NSUInteger index, BOOL * _Nonnull stop) {
+            NSString *field = [str componentsSeparatedByString:@" "].lastObject;
+            NSMutableString * replace = [NSMutableString stringWithString:str];
+            [manager.clsMethodDict.allKeys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSHashTable *table = [manager.clsMethodDict valueForKey:key];
+                if ([table containsObject:field]) {
+                    [replace appendFormat:@" %@", key];
+                }
+            }];
+            
+            NSString *foot = [replace componentsSeparatedByString:str].lastObject;
+            if (foot.length > 0) {
+                NSString * obj = [NSString stringWithFormat:@"%@ [in classlist: %@]",str,foot];
+                [self.dataArray replaceObjectAtIndex:index withObject:obj];
+            } else {
+                [self.dataArray replaceObjectAtIndex:index withObject:replace];
+            }
+        }];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView reloadData];
+            [self stopProgress];
+            NSLog(@"%@",self.dataArray );
+        });
+    });
     
-    self.dataArray = temp;
-    [self.tableView reloadData];
-    [self stopProgress];
+    
+    
+
 
 }
 

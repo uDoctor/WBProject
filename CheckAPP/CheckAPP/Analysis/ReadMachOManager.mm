@@ -49,6 +49,19 @@ NSArray* getKeyValueFromStartEnd(NSString *origin,NSString *start,NSString *end,
     return [classMethod componentsSeparatedByString:separate];
 }
 
+void setKeyValueFromString(NSMutableDictionary *dict,NSString *key,NSString *value) {
+    NSString * cls = key;
+    NSString * method = value;
+    if (cls.length > 0 && method.length > 0) {
+        NSHashTable *table = [NSHashTable new];
+        if ([dict valueForKey:cls]) {
+            table = [dict valueForKey:cls];
+        }
+        [table addObject:method];
+        [dict setValue:table forKey:cls];
+    }
+}
+
 void callbackForStringTable(const char * cs) {
     NSString *field = [[NSString alloc] initWithCString:cs encoding:NSUTF8StringEncoding];
     if ([field containsString:@"-["] && [field containsString:@"]"]) {
@@ -56,24 +69,18 @@ void callbackForStringTable(const char * cs) {
         NSArray *keyValue = getKeyValueFromStartEnd(field,@"-[",@"]",@" ");
         NSString * cls = keyValue.firstObject;
         NSString * method = keyValue.lastObject;
-        if (cls.length > 0 && method.length > 0) {
-            [_manager.clsMethodDict setValue:cls forKey:method];
-        }
+        setKeyValueFromString(_manager.clsMethodDict, cls, method);
     } else if ([field containsString:@"+["] && [field containsString:@"]"]) {
         NSArray *keyValue = getKeyValueFromStartEnd(field,@"+[",@"]",@" ");
         NSString * cls = keyValue.firstObject;
         NSString * method = keyValue.lastObject;
-        if (cls.length > 0 && method.length > 0) {
-            [_manager.clsMethodDict setValue:cls forKey:method];
-        }
+        setKeyValueFromString(_manager.clsMethodDict, cls, method);
     }
     else if ([field containsString:@"_OBJC_IVAR_$"]) {
         NSString * classAndIvar = [field componentsSeparatedByString:@"_OBJC_IVAR_$"].lastObject;
         NSString *cls = [classAndIvar componentsSeparatedByString:@"."].firstObject;
         NSString *ivar = [classAndIvar componentsSeparatedByString:@"."].lastObject;
-        if (cls.length > 0 && ivar.length > 0) {
-            [_manager.clsMethodDict setValue:cls forKey:ivar];
-        }
+        setKeyValueFromString(_manager.clsMethodDict, cls, ivar);
     }
 }
 
@@ -124,9 +131,7 @@ void finishedback() {
         return nil;
     }
     NSString *met = [methodStr substringToIndex:methodStr.length];
-    if (cls.length > 0 && met.length > 0) {
-        [_manager.clsMethodDict setValue:cls forKey:met]; //将class和method放入dict
-    }
+    setKeyValueFromString(_manager.clsMethodDict, cls, met);
     return met;
 }
 
