@@ -17,7 +17,7 @@
 @property (nonatomic, strong) NSHashTable *publicApiTable;
 @property (nonatomic, strong) NSHashTable *privateFrameWorkTable;
 @property (nonatomic, strong) NSHashTable *surePrivateApiTable;
-@property (nonatomic, strong) FMDatabase *db;
+@property (nonatomic, strong) NSHashTable *whiteApiTable;
 
 @end
 
@@ -32,6 +32,7 @@
         self.publicApiTable = [NSHashTable new];
         self.privateFrameWorkTable = [NSHashTable new];
         self.surePrivateApiTable = [NSHashTable new];
+        self.whiteApiTable = [NSHashTable new];
         
         NSString *p0 = BundlePath(@"framework_private_apis");
         [self readPrivateFrameworkFromPath:p0 toTable:self.apiTable];
@@ -45,6 +46,9 @@
         NSString *p3 = BundlePath(@"our_private_apis");
         [self readPrivateFrameworkFromPath:p3 toTable:self.surePrivateApiTable];
         
+        NSString *p4 = BundlePath(@"white_apis");
+        [self readPrivateFrameworkFromPath:p4 toTable:self.whiteApiTable];
+        
     }
     return self;
 }
@@ -57,7 +61,7 @@
     }
 }
 
-- (NSArray *)getApiArray {
+- (NSArray *)getPrivateApiArray {
     return self.apiTable.allObjects;
 }
 
@@ -74,7 +78,12 @@
 //    self.apiTable.allObjects 避免重复调用allObjects
     if (api&&api.length>0&&self.apiTable.count>0) {
         if ([self.apiTable containsObject:api] && ![self.publicApiTable containsObject:api]) {
-            return YES;
+            /// 白名单中的字段不是私有的
+            if ([self.whiteApiTable containsObject:api]) {
+                return NO;
+            } else {
+                return YES;
+            }
         } else {
             return NO;
         }
@@ -119,41 +128,21 @@
 }
 
 
-- (void)removeApiWithArray:(NSArray *)apis {
-//    NSString *path =  [NSString stringWithFormat:@"%@/Library/Caches/apis1.txt",NSHomeDirectory()];
-//    NSFileManager *fm = [NSFileManager defaultManager];
-//    
-//    [apis enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL * _Nonnull stop) {
-//        [self.apiTable removeObject:obj];
-//    }];
-//    NSError *error;
-//    if (![fm fileExistsAtPath:path]) {
-//        if (![fm createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&error]) {
-//        }
-//        if (error) {
-//            NSLog(@"create Failed:%@",[error localizedDescription]);
-//        }
-//    }
-//    
-//    NSFileHandle *fh = [NSFileHandle fileHandleForWritingAtPath:path];
-//
-//    for (NSString *name in self.apiTable.allObjects) {
-//        [fh writeData:[[name stringByAppendingString:@","] dataUsingEncoding:NSUTF8StringEncoding]];
-//    }
-//    [fm removeItemAtPath:self.apiPath error:&error];
-//    if (error) {
-//        NSLog(@"remove origin txt failed:%@",[error localizedDescription]);
-//    }
-//    [fm copyItemAtPath:path toPath:self.apiPath error:&error];
-//    if (error) {
-//        NSLog(@"copy Failed:%@",[error localizedDescription]);
-//    }
-//    
-//    [fm removeItemAtPath:path error:&error];
-//    if (error) {
-//        NSLog(@"remove temp txt failed:%@",[error localizedDescription]);
-//    }
-//    [fh closeFile];
+/// 测试方法，不使用
+- (void)addPrivateApisToWhiteApis:(NSArray *)apis {
+    if (apis==nil || apis.count == 0) {
+        return;
+    }
+    NSString *path = [NSString stringWithFormat:@"%@/%@",NSHomeDirectory(),@"Library/Caches/white_apis.txt"];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if ([fm isWritableFileAtPath:path]) {
+        NSLog(@"isWritableFileAtPath:%@",path);
+    }
+    NSFileHandle *fh = [NSFileHandle fileHandleForWritingAtPath:path];
+    [apis enumerateObjectsUsingBlock:^(NSString *name, NSUInteger idx, BOOL * _Nonnull stop) {
+        [fh writeData:[[name stringByAppendingString:@","] dataUsingEncoding:NSUTF8StringEncoding]];
+    }];
+    [fh closeFile];
 }
 
 @end

@@ -50,10 +50,12 @@ typedef enum : NSUInteger {
     self.swiftMethodsArray = [NSMutableArray new];
     
     self.apiManager = [[APIManager alloc] init];
-    
-    NSLog(@"apiCount=%ld",self.apiManager.apiCount);
     [self setupViews];
- 
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self showPrivateApis];
+    });
+    NSLog(@"apiCount=%ld",self.apiManager.apiCount);
+
 
 }
 #pragma mark ------- Click Event
@@ -82,15 +84,6 @@ typedef enum : NSUInteger {
 
 
 - (void)selectFile {
-    if (self.apiArray.count == 0) {
-        [self downloadClick];
-    }
-    // contains
-    if (self.comboBox.indexOfSelectedItem == 1) {
-        self.rule = MatchRuleContains;
-    } else { //equel
-        self.rule = MatchRuleEquel;
-    }
     [self.dataArray removeAllObjects];
     [self.tableView reloadData];
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
@@ -122,8 +115,8 @@ typedef enum : NSUInteger {
     }
 }
 
-- (void)downloadClick {
-    self.apiArray = [self.apiManager getApiArray];
+- (void)showPrivateApis {
+    self.apiArray = [self.apiManager getPrivateApiArray];
     [self.apiTableView reloadData];
 }
 
@@ -149,6 +142,7 @@ typedef enum : NSUInteger {
                     [self.sureArray addObject:[NSString stringWithFormat:@"[String] %@",field]];
                 } else if ([self.apiManager checkPrivateApiWithApi:field]) {
                     [self.dataArray addObject:[NSString stringWithFormat:@"[String] %@",field]];
+                    [self.dataArray addObject:field];
                 }
                 break;
             case FieldTypeOCMethod:
@@ -167,9 +161,9 @@ typedef enum : NSUInteger {
                 }
                 break;
             default:
-//                if ([self.apiManager checkPrivateApiWithApi:field]) {
-//                    [self.dataArray addObject:field];
-//                }
+                if ([self.apiManager checkPrivateApiWithApi:field]) {
+                    [self.dataArray addObject:field];
+                }
                 break;
         }
     }
@@ -204,9 +198,7 @@ typedef enum : NSUInteger {
     self.dataArray = temp;
     [self.tableView reloadData];
     [self stopProgress];
-//    if (self.dataArray.count > 0) {
-//        [self.apiManager removeApiWithArray:self.dataArray];
-//    }
+
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
