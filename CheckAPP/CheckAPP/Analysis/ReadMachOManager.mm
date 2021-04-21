@@ -24,6 +24,7 @@ static ReadMachOManager *_manager = nil;
     if (self) {
         self.clsMethodDict = [NSMutableDictionary new];
         self.oneStrTable = [NSHashTable new];
+        self.allClass = [NSHashTable new];
     }
     return self;
 }
@@ -81,6 +82,10 @@ void callbackForStringTable(const char * cs) {
         NSString *cls = [classAndIvar componentsSeparatedByString:@"."].firstObject;
         NSString *ivar = [classAndIvar componentsSeparatedByString:@"."].lastObject;
         setKeyValueFromString(_manager.clsMethodDict, cls, ivar);
+    } else if ([field containsString:@"_OBJC_CLASS_$"]) {
+        NSString * _classStr = [field componentsSeparatedByString:@"_OBJC_CLASS_$"].lastObject;
+        NSString *cls = [_classStr substringFromIndex:1];
+        [_manager.allClass addObject:cls];
     }
 }
 

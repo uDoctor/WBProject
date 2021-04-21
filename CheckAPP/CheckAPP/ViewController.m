@@ -28,12 +28,18 @@ typedef enum : NSUInteger {
 
 @property (weak) IBOutlet NSTableView *apiTableView;
 @property (weak) IBOutlet NSTableView *tableView;
+@property (weak) IBOutlet NSTableView *permissionsTable;
+
+@property (nonatomic, copy) NSDictionary *statementPermissionDict;
+@property (nonatomic, strong) NSMutableArray *redPermissionsArray;
+@property (nonatomic, strong) NSMutableArray *permissionsArray;
 
 @property (nonatomic, strong) NSMutableArray *dataArray;
 @property (nonatomic, strong) NSMutableArray *ocMethodsArray;
 @property (nonatomic, strong) NSMutableArray *swiftMethodsArray;
 @property (nonatomic, strong) NSMutableArray *sureArray;
 @property (nonatomic, copy) NSArray *apiArray;
+
 @property (nonatomic, assign) MatchRule rule;
 @property (nonatomic, strong) APIManager *apiManager;
 
@@ -48,6 +54,8 @@ typedef enum : NSUInteger {
     self.ocMethodsArray = [NSMutableArray new];
     self.sureArray = [NSMutableArray new];
     self.swiftMethodsArray = [NSMutableArray new];
+    self.permissionsArray = [NSMutableArray new];
+    self.redPermissionsArray = [NSMutableArray new];
     
     self.apiManager = [[APIManager alloc] init];
     [self setupViews];
@@ -86,6 +94,9 @@ typedef enum : NSUInteger {
 - (void)selectFile {
     [self.dataArray removeAllObjects];
     [self.tableView reloadData];
+    [self.redPermissionsArray removeAllObjects];
+    [self.permissionsArray removeAllObjects];
+    [self.permissionsTable reloadData];
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
     [panel setTitle:@"选择"];
     panel.canChooseFiles = YES;
@@ -98,6 +109,8 @@ typedef enum : NSUInteger {
         NSError *error = nil;
         NSURL *url = [panel URLs].firstObject;
         if ([url.absoluteString hasSuffix:@".app"]) {
+            
+            [self readPermissionsWithPath:url.absoluteString];
             NSString *fileName = [url.absoluteString componentsSeparatedByString:@"/"].lastObject;
             NSString *appName = [fileName componentsSeparatedByString:@"."].firstObject;
             url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",url.absoluteString,appName]];
@@ -126,6 +139,25 @@ typedef enum : NSUInteger {
     [self.sureArray removeAllObjects];
 }
 
+- (void)readPermissionsWithPath:(NSString *)path {
+    NSURL * url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/info.plist",path]];
+    NSError *error= nil;
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithContentsOfURL:url error:&error];
+    if (error) {
+        NSLog(@"error：%@",error);
+    }
+    self.statementPermissionDict = [dict copy];
+    
+    NSDictionary *permissionDict = [self.apiManager getPermissionDict];
+    [permissionDict.allKeys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([dict valueForKey:key]) {
+            [self.permissionsArray addObject:[NSString stringWithFormat:@"%@-%@",key,dict[key]]];
+        }
+    }];
+//    [self.permissionsTable reloadData];
+    
+}
+
 #pragma mark ------- ReadMachOManagerDelagate
 - (void)manager:(ReadMachOManager *)manager field:(NSString *)field type:(FieldType)type {
     if (field.length > 3) {
@@ -142,7 +174,6 @@ typedef enum : NSUInteger {
                     [self.sureArray addObject:[NSString stringWithFormat:@"[String] %@",field]];
                 } else if ([self.apiManager checkPrivateApiWithApi:field]) {
                     [self.dataArray addObject:[NSString stringWithFormat:@"[String] %@",field]];
-                    [self.dataArray addObject:field];
                 }
                 break;
             case FieldTypeOCMethod:
@@ -164,6 +195,7 @@ typedef enum : NSUInteger {
                 if ([self.apiManager checkPrivateApiWithApi:field]) {
                     [self.dataArray addObject:field];
                 }
+                
                 break;
         }
     }
@@ -174,7 +206,6 @@ typedef enum : NSUInteger {
         [self.dataArray addObject:@"no private API"];
     }
     NSLog(@"clsMethodDict%@",manager.clsMethodDict);
-   
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         //去除自定义的oc方法
@@ -231,8 +262,29 @@ typedef enum : NSUInteger {
             }
         }];
         
+        
+        //检测权限
+        NSDictionary *dict = [self.apiManager getPermissionDict];
+        [dict.allKeys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSArray *cls_list = [dict[key] valueForKey:@"clsNames"];
+            [cls_list enumerateObjectsUsingBlock:^(NSString *clsName, NSUInteger idx, BOOL * _Nonnull stop) {
+                if ([manager.allClass containsObject:clsName]) {
+                    if (![self.statementPermissionDict valueForKey:key]) {
+                        [self.redPermissionsArray addObject:[NSString stringWithFormat:@"%@-%@",key,[dict[key] valueForKey:@"des"]]];
+                    }
+                }
+            }];
+        }];
+        
+        
+        NSMutableArray *temp1 = [NSMutableArray new];
+        [temp1 addObjectsFromArray:self.redPermissionsArray];
+        [temp1 addObjectsFromArray:self.permissionsArray];
+        self.permissionsArray = [temp1 mutableCopy];
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.tableView reloadData];
+            [self.permissionsTable reloadData];
             [self stopProgress];
             NSLog(@"%@",self.dataArray );
         });
@@ -247,6 +299,8 @@ typedef enum : NSUInteger {
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
     if (tableView == self.apiTableView) {
         return  self.apiArray.count;
+    } else if (tableView == self.permissionsTable) {
+        return self.permissionsArray.count;
     }
     return  self.dataArray.count;
 }
@@ -255,6 +309,8 @@ typedef enum : NSUInteger {
 - (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
     if (tableView == self.apiTableView) {
         return [NSString stringWithFormat:@"%ld：%@",(long)row,self.apiArray[row]];
+    } else if (tableView == self.permissionsTable) {
+        return [NSString stringWithFormat:@"%ld：%@",(long)row,self.permissionsArray[row]];
     }
     return [NSString stringWithFormat:@"%ld：%@",(long)row,self.dataArray[row]];
 }
@@ -266,6 +322,13 @@ typedef enum : NSUInteger {
            _cell.textColor = [NSColor redColor];
         } else if (row < self.sureArray.count + self.ocMethodsArray.count){
             _cell.textColor = [NSColor colorWithSRGBRed:243/255.f green:181/255.f blue:65/255.f alpha:1];
+        } else {
+            _cell.textColor = [NSColor blackColor];
+        }
+    } else if (tableView == self.permissionsTable){
+        NSTextFieldCell * _cell = cell;
+        if (row < self.redPermissionsArray.count) {
+           _cell.textColor = [NSColor redColor];
         } else {
             _cell.textColor = [NSColor blackColor];
         }
@@ -308,9 +371,6 @@ dispatch_source_t timer;
     [self.addBtn setAction:@selector(addClick)];
     [self.addBtn setTarget:self];
     
-    [self.downloadBtn setAction:@selector(downloadClick)];
-    [self.downloadBtn setTarget:self];
-    
     [self.selectBtn setAction:@selector(selectFile)];
     [self.selectBtn setTarget:self];
 
@@ -320,6 +380,9 @@ dispatch_source_t timer;
     
     self.apiTableView.delegate = self;
     self.apiTableView.dataSource = self;
+    
+    self.permissionsTable.delegate = self;
+    self.permissionsTable.dataSource = self;
 }
 
 

@@ -32,6 +32,7 @@ typedef enum : NSUInteger {
 
 @property (nonatomic, weak) id<ReadMachOManagerDelagate> delagate;
 @property (nonatomic, strong) NSMutableDictionary *clsMethodDict;
+@property (nonatomic, strong) NSHashTable *allClass;
 
 - (void)analysisMachoWithData:(NSData *)fileData;
 

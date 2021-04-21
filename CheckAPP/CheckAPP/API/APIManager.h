@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)checkPrivateApiWithApi:(NSString *)api;
 - (BOOL)checkPrivateFrameworkWithPath:(NSString *)path;
 - (NSArray *)getPrivateApiArray;
+- (NSDictionary *)getPermissionDict;
 
 - (void)addPrivateApis:(NSArray *)apis;
 

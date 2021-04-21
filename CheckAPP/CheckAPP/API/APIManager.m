@@ -65,6 +65,12 @@
     return self.apiTable.allObjects;
 }
 
+- (NSDictionary *)getPermissionDict {
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"permission" ofType:@"plist"];
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithContentsOfFile:path];
+    return dict;
+}
+
 - (BOOL)checkPrivateApiWithApi:(NSString *)api {
     if ([api hasPrefix:@"set"]) {
         NSString *dealString = [api substringFromIndex:2];
@@ -128,7 +134,7 @@
 }
 
 
-/// 测试方法，不使用
+/// 测试方法，勿使用
 - (void)addPrivateApisToWhiteApis:(NSArray *)apis {
     if (apis==nil || apis.count == 0) {
         return;
