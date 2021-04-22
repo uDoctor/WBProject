@@ -1,5 +1,17 @@
 
 # 检测Mach-O私有api和权限
+使用范围：
+1. macho的可执行文件
+2. 项目的.app包
+
+如果只有项目的.ipa包，以58tongcheng.ipa为例，请安以下步骤：
+
+1. 先把58tongcheng.ipa后缀改成.zip变成58tongchen.zip
+2. 然后在解压，就变成了 58tongcheng （有后缀的话是58tongcheng.app）
+3. 此时可以运行项目，【check】选择 58tongcheng 或者 58tongcheng.app
+
+注意：名字58tongcheng.app可以，58tongcheng1.app就不行了。
+因为需要拿到58tongcheng这个名字去里面解析东西，所以58tongcheng只能是项目名字，不能带其他的符号，如果有其他符号，请改成项目名字
 
 ## 使用
 
