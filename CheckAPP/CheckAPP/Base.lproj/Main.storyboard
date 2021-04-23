@@ -884,11 +884,19 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                 </scroller>
                             </scrollView>
+                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gf5-Sn-bKX">
+                                <rect key="frame" x="23" y="71" width="80" height="32"/>
+                                <buttonCell key="cell" type="push" title="output" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="FgO-YW-bm3">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                            </button>
                         </subviews>
                         <constraints>
                             <constraint firstItem="L2V-o2-mde" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="30" id="0SA-i9-cUc"/>
                             <constraint firstAttribute="trailing" secondItem="m2Q-EB-sgR" secondAttribute="trailing" constant="10" id="19f-QG-g2N"/>
                             <constraint firstItem="L2V-o2-mde" firstAttribute="centerY" secondItem="sZe-Kq-HgI" secondAttribute="centerY" id="21f-wY-5yJ"/>
+                            <constraint firstItem="gf5-Sn-bKX" firstAttribute="top" secondItem="iyz-Cn-Zx1" secondAttribute="bottom" constant="100" id="2x3-cf-n9u"/>
                             <constraint firstAttribute="trailing" secondItem="4oD-qJ-gtb" secondAttribute="trailing" constant="10" id="Btc-xY-k61"/>
                             <constraint firstAttribute="trailing" secondItem="TYf-4R-YeG" secondAttribute="trailing" constant="20" id="Cac-01-mJF"/>
                             <constraint firstItem="TYf-4R-YeG" firstAttribute="leading" secondItem="hks-HD-TW7" secondAttribute="leading" id="Cpw-V0-aTD"/>
@@ -905,6 +913,7 @@
                             <constraint firstItem="NQP-G6-Glu" firstAttribute="leading" secondItem="c2M-kF-jdM" secondAttribute="leading" id="kgN-s5-gxT"/>
                             <constraint firstItem="m2Q-EB-sgR" firstAttribute="top" secondItem="K94-wi-xXf" secondAttribute="bottom" constant="10" id="mQn-XY-zRY"/>
                             <constraint firstItem="K94-wi-xXf" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="120" id="maX-Rg-Lup"/>
+                            <constraint firstItem="4oD-qJ-gtb" firstAttribute="leading" secondItem="gf5-Sn-bKX" secondAttribute="trailing" constant="23" id="uJo-vh-sAE"/>
                             <constraint firstItem="TYf-4R-YeG" firstAttribute="top" secondItem="m2Q-EB-sgR" secondAttribute="bottom" constant="15" id="vxg-h4-VRM"/>
                         </constraints>
                     </view>
@@ -912,6 +921,7 @@
                         <outlet property="addBtn" destination="L2V-o2-mde" id="CFm-Xn-n9B"/>
                         <outlet property="addTextView" destination="sZe-Kq-HgI" id="8nA-oF-UnQ"/>
                         <outlet property="apiTableView" destination="hks-HD-TW7" id="F61-om-Tfv"/>
+                        <outlet property="outputBtn" destination="gf5-Sn-bKX" id="RQW-Jt-JTz"/>
                         <outlet property="permissionsTable" destination="MWl-Zp-vhp" id="FbA-pp-akf"/>
                         <outlet property="progressbar" destination="NQP-G6-Glu" id="Eck-T2-BWx"/>
                         <outlet property="selectBtn" destination="iyz-Cn-Zx1" id="LRc-nW-fWL"/>

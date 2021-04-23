@@ -20,7 +20,7 @@ typedef enum : NSUInteger {
 @property (weak) IBOutlet NSComboBox *comboBox;
 
 @property (weak) IBOutlet NSButton *addBtn;
-@property (weak) IBOutlet NSButton *downloadBtn;
+@property (weak) IBOutlet NSButton *outputBtn;
 @property (weak) IBOutlet NSButton *selectBtn;
 //
 @property (unsafe_unretained) IBOutlet NSTextView *addTextView;
@@ -126,6 +126,48 @@ typedef enum : NSUInteger {
         [read analysisMachoWithData:fileData];
         [self startProgress];
     }
+}
+
+- (void)outputBtnClick {
+    NSString *path = [NSString stringWithFormat:@"%@/%@",NSHomeDirectory(),@"Library/Caches/result.txt"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:path]) {
+        NSError *error = nil;
+        BOOL isSuccess = [fileManager createFileAtPath:path contents:nil attributes:nil];
+        NSLog(@"error = %@",error);
+        NSLog(@"isSiccess = %d",isSuccess);
+        
+    }
+    NSError *error = nil;
+    NSFileHandle *fh = [NSFileHandle fileHandleForWritingToURL:[NSURL fileURLWithPath:path] error:&error];
+    if (error) {
+        NSLog(@"open file error: %@",error);
+    }
+
+    __block NSError *err = nil;
+    [fh writeData:[@"\n*******************权限*******************\n\n" dataUsingEncoding:NSUTF8StringEncoding] error:&err];
+    [self.permissionsArray enumerateObjectsUsingBlock:^(NSString *str, NSUInteger idx, BOOL * _Nonnull stop) {
+        [fh writeData:[[str stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding] error:&err];
+        if (error) {
+            NSLog(@"write file error: %@",err);
+        }
+    }];
+    [fh writeData:[@"\n*******************apis*******************\n\n" dataUsingEncoding:NSUTF8StringEncoding] error:&err];
+
+    [self.dataArray enumerateObjectsUsingBlock:^(NSString *str, NSUInteger idx, BOOL * _Nonnull stop) {
+        
+        [fh writeData:[[str stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding] error:&err];
+        if (error) {
+            NSLog(@"write file error: %@",err);
+        }
+    }];
+    [fh closeFile];
+    
+    NSTask *openTask = [[NSTask alloc] init];
+    [openTask setLaunchPath:@"/bin/sh"];
+    [openTask setArguments:[NSArray arrayWithObjects:@"-c",[NSString stringWithFormat:@"%@", [NSString stringWithFormat:@"open %@",path]], nil]];
+    [openTask launch];
+
 }
 
 - (void)showPrivateApis {
@@ -373,7 +415,9 @@ dispatch_source_t timer;
     
     [self.selectBtn setAction:@selector(selectFile)];
     [self.selectBtn setTarget:self];
-
+    
+    [self.outputBtn setAction:@selector(outputBtnClick)];
+    [self.outputBtn setTarget:self];
     
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
