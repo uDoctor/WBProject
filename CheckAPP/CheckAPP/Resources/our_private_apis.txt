@@ -1,1 +1,1 @@
-setBootTimeInSec:,setCarrierInfo:,setCountryCode:,setDeviceName:,setDisk:,setLanguage:,setMachine:,setMemory:,setModel:,setSysFileTime:,setSystemVersion:,setTimeZone:,JSPatch,_setWidth:,continuousCorners,setContinuousCorners:,
+setBootTimeInSec:,setCarrierInfo:,setCountryCode:,setDeviceName:,setDisk:,setLanguage:,setMachine:,setMemory:,setSysFileTime:,setSystemVersion:,setTimeZone:,JSPatch,_setWidth:,continuousCorners,setContinuousCorners:,

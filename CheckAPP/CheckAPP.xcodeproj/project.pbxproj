@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1FE6C919716610BDA6CAFF71 /* Pods_CheckAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B39191F277C1530D7CC912CD /* Pods_CheckAPP.framework */; };
+		241AB3DF265B9FD700BDB0C9 /* FileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 241AB3DE265B9FD700BDB0C9 /* FileManager.m */; };
 		24725AE2261711890048CD3C /* APIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 24725AE0261711890048CD3C /* APIManager.m */; };
 		24725AFB261F1BCE0048CD3C /* our_private_apis.txt in Resources */ = {isa = PBXBuildFile; fileRef = 24725AF5261F1BCB0048CD3C /* our_private_apis.txt */; };
 		24725AFD261F1BCE0048CD3C /* private_framwork.txt in Resources */ = {isa = PBXBuildFile; fileRef = 24725AF7261F1BCC0048CD3C /* private_framwork.txt */; };
@@ -16,6 +17,7 @@
 		2477A5EF2625407100C56F97 /* white_apis.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2477A5EE2625407100C56F97 /* white_apis.txt */; };
 		2477A67C262FC4A200C56F97 /* permission.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2477A67B262FC4A100C56F97 /* permission.plist */; };
 		2477A685263009DF00C56F97 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 2477A684263009DF00C56F97 /* README.md */; };
+		24A340DD2656397A0026DCE0 /* LinkMapManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 24A340DC2656397A0026DCE0 /* LinkMapManager.m */; };
 		24AAD82F25A31C000065F4B8 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 24AAD82E25A31C000065F4B8 /* AppDelegate.m */; };
 		24AAD83225A31C000065F4B8 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 24AAD83125A31C000065F4B8 /* ViewController.m */; };
 		24AAD83425A31C040065F4B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 24AAD83325A31C040065F4B8 /* Assets.xcassets */; };
@@ -29,6 +31,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		241AB3DD265B9FD700BDB0C9 /* FileManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; };
+		241AB3DE265B9FD700BDB0C9 /* FileManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FileManager.m; sourceTree = "<group>"; };
 		24725AD2261710890048CD3C /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		24725AD5261710A10048CD3C /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		24725AE0261711890048CD3C /* APIManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APIManager.m; sourceTree = "<group>"; };
@@ -40,6 +44,8 @@
 		2477A5EE2625407100C56F97 /* white_apis.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = white_apis.txt; sourceTree = "<group>"; };
 		2477A67B262FC4A100C56F97 /* permission.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = permission.plist; sourceTree = "<group>"; };
 		2477A684263009DF00C56F97 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		24A340DB2656397A0026DCE0 /* LinkMapManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LinkMapManager.h; sourceTree = "<group>"; };
+		24A340DC2656397A0026DCE0 /* LinkMapManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LinkMapManager.m; sourceTree = "<group>"; };
 		24AAD82A25A31C000065F4B8 /* CheckAPP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheckAPP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		24AAD82D25A31C000065F4B8 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		24AAD82E25A31C000065F4B8 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -77,6 +83,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		241AB3DC265B9FC100BDB0C9 /* Base */ = {
+			isa = PBXGroup;
+			children = (
+				241AB3DD265B9FD700BDB0C9 /* FileManager.h */,
+				241AB3DE265B9FD700BDB0C9 /* FileManager.m */,
+			);
+			path = Base;
+			sourceTree = "<group>";
+		};
 		24725AD1261710890048CD3C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -109,6 +124,15 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		24A340DA265639490026DCE0 /* LinkMap */ = {
+			isa = PBXGroup;
+			children = (
+				24A340DB2656397A0026DCE0 /* LinkMapManager.h */,
+				24A340DC2656397A0026DCE0 /* LinkMapManager.m */,
+			);
+			path = LinkMap;
+			sourceTree = "<group>";
+		};
 		24AAD82125A31C000065F4B8 = {
 			isa = PBXGroup;
 			children = (
@@ -131,6 +155,8 @@
 			isa = PBXGroup;
 			children = (
 				2477A684263009DF00C56F97 /* README.md */,
+				241AB3DC265B9FC100BDB0C9 /* Base */,
+				24A340DA265639490026DCE0 /* LinkMap */,
 				24725ADF261711620048CD3C /* API */,
 				248475CE26117AA200B724E7 /* Resources */,
 				24AAD85725A44BB90065F4B8 /* Download */,
@@ -307,8 +333,10 @@
 				24AAD85325A40B960065F4B8 /* ReadMachOManager.mm in Sources */,
 				24AAD83225A31C000065F4B8 /* ViewController.m in Sources */,
 				24AAD83A25A31C040065F4B8 /* main.m in Sources */,
+				241AB3DF265B9FD700BDB0C9 /* FileManager.m in Sources */,
 				24AAD84725A408E60065F4B8 /* ReadMacho.cpp in Sources */,
 				24AAD85A25A44BCF0065F4B8 /* Downloader.m in Sources */,
+				24A340DD2656397A0026DCE0 /* LinkMapManager.m in Sources */,
 				24AAD82F25A31C000065F4B8 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

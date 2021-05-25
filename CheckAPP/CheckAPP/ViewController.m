@@ -9,6 +9,7 @@
 #import "ReadMachOManager.h"
 #import "Downloader.h"
 #import "APIManager.h"
+#import "LinkMapManager.h"
 
 typedef enum : NSUInteger {
     MatchRuleEquel,
@@ -20,8 +21,12 @@ typedef enum : NSUInteger {
 @property (weak) IBOutlet NSComboBox *comboBox;
 
 @property (weak) IBOutlet NSButton *addBtn;
+@property (weak) IBOutlet NSButton *linkMapUserApiBtn;
+
 @property (weak) IBOutlet NSButton *outputBtn;
 @property (weak) IBOutlet NSButton *selectBtn;
+@property (weak) IBOutlet NSButton *linkmapAllApiBtn;
+
 //
 @property (unsafe_unretained) IBOutlet NSTextView *addTextView;
 @property (weak) IBOutlet NSProgressIndicator *progressbar;
@@ -39,6 +44,8 @@ typedef enum : NSUInteger {
 @property (nonatomic, strong) NSMutableArray *swiftMethodsArray;
 @property (nonatomic, strong) NSMutableArray *sureArray;
 @property (nonatomic, copy) NSArray *apiArray;
+@property (nonatomic, copy) NSArray *linkMapApiArray;
+@property (nonatomic, copy) NSArray *addLinkMapApiArray;
 
 @property (nonatomic, assign) MatchRule rule;
 @property (nonatomic, strong) APIManager *apiManager;
@@ -64,32 +71,40 @@ typedef enum : NSUInteger {
     });
     NSLog(@"apiCount=%ld",self.apiManager.apiCount);
 
-
 }
 #pragma mark ------- Click Event
 - (void)addClick {
-    if (self.addTextView.string.length > 0) {
-        NSMutableArray *marr = [NSMutableArray arrayWithArray:self.apiArray];
-        NSMutableArray *addMarr = [NSMutableArray new];
-        if ([self.addTextView.string containsString:@","]) {
-            NSArray *arr = [self.addTextView.string componentsSeparatedByString:@","];
-            [arr enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                if ([(NSString*)obj length] > 0) {
-                    [marr addObject:(NSString*)obj];
-                    [addMarr addObject:(NSString*)obj];
-                }
-            }];
-        } else {
-            [marr addObject:[self.addTextView.string copy]];
-        }
-        self.apiArray = [marr copy];
-        [self.apiManager addPrivateApis:[addMarr copy]];
-        [self.apiTableView reloadData];
-        self.addTextView.string = @"";
-
-    }
+    NSMutableArray *marr = [NSMutableArray arrayWithArray:self.apiArray];
+    NSArray *apis = [self stringArrayFromTextView];
+    [apis enumerateObjectsUsingBlock:^(NSString * api, NSUInteger idx, BOOL * _Nonnull stop) {
+        [marr insertObject:api atIndex:0];
+    }];
+    self.apiArray = [marr copy];
+    self.addLinkMapApiArray = apis;
+    [self.apiManager addPrivateApis:apis];
+    [self.apiTableView reloadData];
+    self.addTextView.string = @"";
 }
 
+- (void)checkUserApiBtnClick {
+    self.addLinkMapApiArray = [self stringArrayFromTextView];
+    if (self.addLinkMapApiArray.count <= 0) {
+        NSError * error = [NSError errorWithDomain:@"添加api" code:10 userInfo:nil];
+        NSAlert * alert = [NSAlert alertWithError:error];
+        [alert runModal];
+        return;
+    }
+    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    [panel setTitle:@"选择LinkMap"];
+    panel.canChooseFiles = YES;
+    NSModalResponse reponse = [panel runModal];
+    if (reponse == NSModalResponseOK) {
+        NSURL *url = [panel URLs].firstObject;
+        LinkMapManager *lpm = [[LinkMapManager alloc] init];
+        [lpm readLinkMapWithFile:url];
+        [lpm checkApiObjectFileWithApi:self.addLinkMapApiArray];
+    }
+}
 
 - (void)selectFile {
     [self.dataArray removeAllObjects];
@@ -130,46 +145,69 @@ typedef enum : NSUInteger {
 
 - (void)outputBtnClick {
     NSString *path = [NSString stringWithFormat:@"%@/%@",NSHomeDirectory(),@"Library/Caches/result.txt"];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if (![fileManager fileExistsAtPath:path]) {
-        NSError *error = nil;
-        BOOL isSuccess = [fileManager createFileAtPath:path contents:nil attributes:nil];
-        NSLog(@"error = %@",error);
-        NSLog(@"isSiccess = %d",isSuccess);
-        
-    }
-    NSError *error = nil;
-    NSFileHandle *fh = [NSFileHandle fileHandleForWritingToURL:[NSURL fileURLWithPath:path] error:&error];
-    if (error) {
-        NSLog(@"open file error: %@",error);
-    }
 
-    __block NSError *err = nil;
-    [fh writeData:[@"\n*******************权限*******************\n\n" dataUsingEncoding:NSUTF8StringEncoding] error:&err];
+    FileManager *fm = [[FileManager alloc] init];
+    
+    NSMutableString *mstr = [NSMutableString new];
+    [mstr appendString:@"\n*******************权限*******************\n\n"];
+    
     [self.permissionsArray enumerateObjectsUsingBlock:^(NSString *str, NSUInteger idx, BOOL * _Nonnull stop) {
-        [fh writeData:[[str stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding] error:&err];
-        if (error) {
-            NSLog(@"write file error: %@",err);
-        }
+        [mstr appendString:str];
+        [mstr appendString:@"\n"];
     }];
-    [fh writeData:[@"\n*******************apis*******************\n\n" dataUsingEncoding:NSUTF8StringEncoding] error:&err];
+    
+    [mstr appendString:@"\n*******************apis*******************\n\n"];
 
     [self.dataArray enumerateObjectsUsingBlock:^(NSString *str, NSUInteger idx, BOOL * _Nonnull stop) {
-        
-        [fh writeData:[[str stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding] error:&err];
-        if (error) {
-            NSLog(@"write file error: %@",err);
-        }
+        [mstr appendString:str];
+        [mstr appendString:@"\n"];
     }];
-    [fh closeFile];
-    
-    NSTask *openTask = [[NSTask alloc] init];
-    [openTask setLaunchPath:@"/bin/sh"];
-    [openTask setArguments:[NSArray arrayWithObjects:@"-c",[NSString stringWithFormat:@"%@", [NSString stringWithFormat:@"open %@",path]], nil]];
-    [openTask launch];
+    [fm writeToFileWithData:[mstr dataUsingEncoding:NSUTF8StringEncoding] file:path];
+    [fm openFileWithPath:path];
 
 }
+- (IBAction)linkmapClick:(id)sender {
+    if (self.linkMapApiArray.count <= 0) {
+        NSError * error = [NSError errorWithDomain:@"请先【check】" code:10 userInfo:nil];
+        NSAlert * alert = [NSAlert alertWithError:error];
+        [alert runModal];
+        return;
+    }
+    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    [panel setTitle:@"选择LinkMap"];
+    panel.canChooseFiles = YES;
+    NSModalResponse reponse = [panel runModal];
+    if (reponse == NSModalResponseOK) {
+        NSURL *url = [panel URLs].firstObject;
+        LinkMapManager *lpm = [[LinkMapManager alloc] init];
+        [lpm readLinkMapWithFile:url];
+        NSMutableArray *marr = [NSMutableArray new];
+        [self.linkMapApiArray enumerateObjectsUsingBlock:^(NSString *api, NSUInteger idx, BOOL * _Nonnull stop) {
+            [marr addObject:[api componentsSeparatedByString:@" "].lastObject];
+        }];
+        [lpm checkApiObjectFileWithApi:marr];
+    }
+    
+}
 
+#pragma mark ------- Private Method
+- (NSArray<NSString *> *)stringArrayFromTextView {
+    if (self.addTextView.string.length <= 0) { return nil; }
+    NSMutableArray *addMarr = [NSMutableArray new];
+    NSString *textString = [self.addTextView.string copy];
+    if ([textString containsString:@","]) {
+        NSArray *arr = [textString componentsSeparatedByString:@","];
+        [arr enumerateObjectsUsingBlock:^(NSString *str, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ([str length] > 0) {
+                [addMarr addObject:str];
+            }
+        }];
+        return [addMarr copy];
+    } else {
+        [addMarr addObject:textString];
+        return [addMarr copy];
+    }
+}
 - (void)showPrivateApis {
     self.apiArray = [self.apiManager getPrivateApiArray];
     [self.apiTableView reloadData];
@@ -219,6 +257,7 @@ typedef enum : NSUInteger {
                 }
                 break;
             case FieldTypeOCMethod:
+//                printf("%s |",[field UTF8String]);
                 if ([self.apiManager checkSurePrivateApi:field]) {
                     [self.sureArray addObject:[NSString stringWithFormat:@"[OCMethod] %@",field]];
                 } else if ([self.apiManager checkPrivateApiWithApi:field]) {
@@ -284,7 +323,8 @@ typedef enum : NSUInteger {
         [temp addObjectsFromArray:self.dataArray];
         
         self.dataArray = [temp mutableCopy];
-        
+//        self.linkMapApiArray = [temp mutableCopy];
+        self.linkMapApiArray = [self.sureArray mutableCopy];
         [temp enumerateObjectsUsingBlock:^( NSString *str, NSUInteger index, BOOL * _Nonnull stop) {
             NSString *field = [str componentsSeparatedByString:@" "].lastObject;
             NSMutableString * replace = [NSMutableString stringWithString:str];
@@ -419,6 +459,10 @@ dispatch_source_t timer;
     [self.outputBtn setAction:@selector(outputBtnClick)];
     [self.outputBtn setTarget:self];
     
+    [self.linkMapUserApiBtn setAction:@selector(checkUserApiBtnClick)];
+    [self.linkMapUserApiBtn setTarget:self];
+    
+        
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
